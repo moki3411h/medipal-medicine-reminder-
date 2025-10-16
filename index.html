@@ -1,719 +1,324 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MediPal - Smart Medicine Reminder</title>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-        
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        :root {
-            --primary: #6366f1;
-            --primary-dark: #4f46e5;
-            --secondary: #8b5cf6;
-            --success: #10b981;
-            --danger: #ef4444;
-            --warning: #f59e0b;
-            --dark: #1f2937;
-            --light: #f9fafb;
-            --border: #e5e7eb;
-            --text: #374151;
-            --text-light: #6b7280;
-        }
-
-        body {
-            font-family: 'Inter', sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
-            color: var(--text);
-        }
-
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-        }
-
-        .header {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            padding: 30px 40px;
-            margin-bottom: 30px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.1);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .logo {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
-        .logo-icon {
-            width: 50px;
-            height: 50px;
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 28px;
-        }
-
-        .logo h1 {
-            font-size: 28px;
-            font-weight: 700;
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .header-stats {
-            display: flex;
-            gap: 30px;
-        }
-
-        .stat-item {
-            text-align: center;
-        }
-
-        .stat-value {
-            font-size: 28px;
-            font-weight: 700;
-            color: var(--primary);
-        }
-
-        .stat-label {
-            font-size: 12px;
-            color: var(--text-light);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        .dashboard-grid {
-            display: grid;
-            grid-template-columns: 1fr 2fr;
-            gap: 30px;
-            margin-bottom: 30px;
-        }
-
-        .card {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            padding: 30px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.1);
-            transition: transform 0.3s;
-        }
-
-        .card:hover {
-            transform: translateY(-5px);
-        }
-
-        .card-header {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 25px;
-            padding-bottom: 20px;
-            border-bottom: 2px solid var(--border);
-        }
-
-        .card-icon {
-            width: 40px;
-            height: 40px;
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 20px;
-        }
-
-        .card-title {
-            font-size: 20px;
-            font-weight: 600;
-            color: var(--dark);
-        }
-
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        .form-label {
-            display: block;
-            font-size: 14px;
-            font-weight: 500;
-            color: var(--text);
-            margin-bottom: 8px;
-        }
-
-        .form-input, .form-select {
-            width: 100%;
-            padding: 12px 16px;
-            border: 2px solid var(--border);
-            border-radius: 10px;
-            font-size: 15px;
-            font-family: 'Inter', sans-serif;
-            transition: all 0.3s;
-            background: white;
-        }
-
-        .form-input:focus, .form-select:focus {
-            outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
-        }
-
-        .btn {
-            padding: 14px 28px;
-            border: none;
-            border-radius: 10px;
-            font-size: 15px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-            font-family: 'Inter', sans-serif;
-            width: 100%;
-        }
-
-        .btn-primary {
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            color: white;
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 30px rgba(99, 102, 241, 0.3);
-        }
-
-        .timer-card {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            text-align: center;
-            padding: 40px;
-        }
-
-        .current-time {
-            font-size: 72px;
-            font-weight: 700;
-            font-family: 'Courier New', monospace;
-            letter-spacing: 4px;
-            margin: 20px 0;
-        }
-
-        .current-date {
-            font-size: 18px;
-            opacity: 0.9;
-            font-weight: 500;
-        }
-
-        .medicine-grid {
-            display: grid;
-            gap: 15px;
-            max-height: 500px;
-            overflow-y: auto;
-            padding-right: 10px;
-        }
-
-        .medicine-grid::-webkit-scrollbar {
-            width: 6px;
-        }
-
-        .medicine-grid::-webkit-scrollbar-track {
-            background: var(--light);
-            border-radius: 10px;
-        }
-
-        .medicine-grid::-webkit-scrollbar-thumb {
-            background: var(--primary);
-            border-radius: 10px;
-        }
-
-        .medicine-card {
-            background: linear-gradient(135deg, #f0f9ff 0%, #e0e7ff 100%);
-            border-radius: 15px;
-            padding: 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-left: 5px solid var(--primary);
-            transition: all 0.3s;
-        }
-
-        .medicine-card:hover {
-            transform: translateX(5px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-        }
-
-        .medicine-info h4 {
-            font-size: 18px;
-            font-weight: 600;
-            color: var(--dark);
-            margin-bottom: 8px;
-        }
-
-        .medicine-meta {
-            display: flex;
-            gap: 15px;
-            flex-wrap: wrap;
-        }
-
-        .meta-badge {
-            background: white;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 500;
-            color: var(--text);
-        }
-
-        .medicine-actions {
-            display: flex;
-            gap: 10px;
-        }
-
-        .icon-btn {
-            width: 40px;
-            height: 40px;
-            border-radius: 10px;
-            border: none;
-            cursor: pointer;
-            font-size: 18px;
-            transition: all 0.3s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .btn-edit {
-            background: var(--warning);
-            color: white;
-        }
-
-        .btn-delete {
-            background: var(--danger);
-            color: white;
-        }
-
-        .icon-btn:hover {
-            transform: scale(1.1);
-        }
-
-        .profile-card {
-            background: linear-gradient(135deg, #f0f9ff 0%, #e0e7ff 100%);
-            border-radius: 15px;
-            padding: 25px;
-            margin-top: 20px;
-        }
-
-        .profile-avatar {
-            width: 80px;
-            height: 80px;
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 36px;
-            margin: 0 auto 20px;
-        }
-
-        .profile-info {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-        }
-
-        .info-item {
-            background: white;
-            padding: 12px;
-            border-radius: 10px;
-        }
-
-        .info-label {
-            font-size: 12px;
-            color: var(--text-light);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 4px;
-        }
-
-        .info-value {
-            font-size: 16px;
-            font-weight: 600;
-            color: var(--dark);
-        }
-
-        .quick-stats {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 20px;
-            margin-bottom: 30px;
-        }
-
-        .stat-card {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            padding: 25px;
-            text-align: center;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-        }
-
-        .stat-icon {
-            width: 60px;
-            height: 60px;
-            margin: 0 auto 15px;
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 28px;
-        }
-
-        .stat-number {
-            font-size: 32px;
-            font-weight: 700;
-            color: var(--dark);
-            margin-bottom: 5px;
-        }
-
-        .stat-text {
-            font-size: 14px;
-            color: var(--text-light);
-        }
-
-        .toast {
-            position: fixed;
-            top: 30px;
-            right: 30px;
-            background: white;
-            border-radius: 15px;
-            padding: 20px 25px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            display: none;
-            z-index: 1000;
-            min-width: 320px;
-            animation: slideIn 0.4s ease;
-        }
-
-        .toast.show {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
-        .toast-icon {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 20px;
-            flex-shrink: 0;
-        }
-
-        .toast-success .toast-icon {
-            background: var(--success);
-            color: white;
-        }
-
-        .toast-alarm .toast-icon {
-            background: var(--danger);
-            color: white;
-            animation: pulse 1s infinite;
-        }
-
-        .toast-content h4 {
-            font-size: 16px;
-            font-weight: 600;
-            color: var(--dark);
-            margin-bottom: 4px;
-        }
-
-        .toast-content p {
-            font-size: 14px;
-            color: var(--text-light);
-        }
-
-        @keyframes slideIn {
-            from {
-                transform: translateX(400px);
-                opacity: 0;
-            }
-            to {
-                transform: translateX(0);
-                opacity: 1;
-            }
-        }
-
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.1); }
-        }
-
-        .empty-state {
-            text-align: center;
-            padding: 60px 20px;
-        }
-
-        .empty-icon {
-            font-size: 64px;
-            margin-bottom: 20px;
-            opacity: 0.3;
-        }
-
-        .empty-text {
-            font-size: 16px;
-            color: var(--text-light);
-        }
-
-        .tabs {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 25px;
-            border-bottom: 2px solid var(--border);
-        }
-
-        .tab {
-            padding: 12px 24px;
-            background: none;
-            border: none;
-            border-bottom: 3px solid transparent;
-            cursor: pointer;
-            font-size: 15px;
-            font-weight: 500;
-            color: var(--text-light);
-            transition: all 0.3s;
-            font-family: 'Inter', sans-serif;
-        }
-
-        .tab.active {
-            color: var(--primary);
-            border-bottom-color: var(--primary);
-        }
-
-        .tab-content {
-            display: none;
-        }
-
-        .tab-content.active {
-            display: block;
-        }
-
-        @media (max-width: 1024px) {
-            .dashboard-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .header {
-                flex-direction: column;
-                gap: 20px;
+    <!-- Add this script section before </body> -->
+    <script>
+        // Global variables
+        let medicines = [];
+        let profile = {};
+        let editingMedicineId = null;
+
+        // Initialize app when DOM is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeApp();
+        });
+
+        // Initialize application
+        function initializeApp() {
+            startClock();
+            loadProfile();
+            loadMedicines();
+            updateStatistics();
+            setupEventListeners();
+            startReminderChecker();
+        }
+
+        // Start real-time clock - FIX FOR TIME DISPLAY
+        function startClock() {
+            function updateClock() {
+                const now = new Date();
+                
+                // Update time
+                const hours = String(now.getHours()).padStart(2, '0');
+                const minutes = String(now.getMinutes()).padStart(2, '0');
+                const seconds = String(now.getSeconds()).padStart(2, '0');
+                document.getElementById('currentTime').textContent = `${hours}:${minutes}:${seconds}`;
+                
+                // Update date
+                const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+                document.getElementById('currentDate').textContent = now.toLocaleDateString('en-US', options);
             }
             
-            .current-time {
-                font-size: 48px;
-            }
+            updateClock();
+            setInterval(updateClock, 1000);
+        }
 
-            .quick-stats {
-                grid-template-columns: 1fr;
-            }
+        // Setup event listeners
+        function setupEventListeners() {
+            document.getElementById('medicineForm').addEventListener('submit', handleMedicineSubmit);
+            document.getElementById('profileForm').addEventListener('submit', handleProfileSubmit);
+        }
 
-            .profile-info {
-                grid-template-columns: 1fr;
+        // Handle medicine form submission
+        function handleMedicineSubmit(e) {
+            e.preventDefault();
+            
+            const medicineData = {
+                id: editingMedicineId || Date.now().toString(),
+                medicineName: document.getElementById('medicineName').value,
+                dosage: document.getElementById('dosage').value,
+                reminderTime: document.getElementById('reminderTime').value,
+                frequency: document.getElementById('frequency').value,
+                duration: document.getElementById('duration').value,
+                instructions: document.getElementById('instructions').value,
+                active: true,
+                createdAt: new Date().toISOString()
+            };
+            
+            if (editingMedicineId) {
+                const index = medicines.findIndex(m => m.id === editingMedicineId);
+                medicines[index] = medicineData;
+                editingMedicineId = null;
+            } else {
+                medicines.push(medicineData);
+            }
+            
+            saveMedicines();
+            showToast('Success', 'Medicine reminder saved successfully!', 'success');
+            document.getElementById('medicineForm').reset();
+            displayMedicines();
+            updateStatistics();
+        }
+
+        // Handle profile form submission
+        function handleProfileSubmit(e) {
+            e.preventDefault();
+            
+            profile = {
+                name: document.getElementById('userName').value,
+                age: document.getElementById('userAge').value,
+                bloodGroup: document.getElementById('bloodGroup').value,
+                emergencyContact: document.getElementById('emergencyContact').value
+            };
+            
+            saveProfile();
+            showToast('Success', 'Profile saved successfully!', 'success');
+            displayProfile();
+            switchTab('view');
+        }
+
+        // Load medicines from localStorage
+        function loadMedicines() {
+            const saved = localStorage.getItem('medicines');
+            if (saved) {
+                medicines = JSON.parse(saved);
+                displayMedicines();
             }
         }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="header">
-            <div class="logo">
-                <div class="logo-icon">💊</div>
-                <div>
-                    <h1>MediPal</h1>
-                    <p style="font-size: 14px; color: var(--text-light); margin-top: 4px;">Smart Medicine Management</p>
-                </div>
-            </div>
-            <div class="header-stats">
-                <div class="stat-item">
-                    <div class="stat-value" id="totalMeds">0</div>
-                    <div class="stat-label">Active Meds</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-value" id="todayDoses">0</div>
-                    <div class="stat-label">Today's Doses</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-value" id="adherenceRate">100%</div>
-                    <div class="stat-label">Adherence</div>
-                </div>
-            </div>
-        </div>
 
-        <div class="quick-stats">
-            <div class="stat-card">
-                <div class="stat-icon">⏰</div>
-                <div class="stat-number" id="upcomingCount">0</div>
-                <div class="stat-text">Upcoming Reminders</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon">✅</div>
-                <div class="stat-number" id="takenCount">0</div>
-                <div class="stat-text">Doses Taken Today</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon">❌</div>
-                <div class="stat-number" id="missedCount">0</div>
-                <div class="stat-text">Missed Doses</div>
-            </div>
-        </div>
+        // Save medicines to localStorage
+        function saveMedicines() {
+            localStorage.setItem('medicines', JSON.stringify(medicines));
+        }
 
-        <div class="dashboard-grid">
-            <div>
-                <div class="card timer-card">
-                    <div class="card-header" style="border-color: rgba(255,255,255,0.3);">
-                        <div class="card-icon" style="background: rgba(255,255,255,0.2);">⏰</div>
-                        <h3 class="card-title" style="color: white;">Current Time</h3>
+        // Display medicines in the grid - FIX FOR MEDICINE LIST
+        function displayMedicines() {
+            const medicineList = document.getElementById('medicineList');
+            
+            if (medicines.length === 0) {
+                medicineList.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">💊</div>
+                        <div class="empty-text">No medicines added yet<br>Add your first reminder above!</div>
                     </div>
-                    <div class="current-time" id="currentTime">00:00:00</div>
-                    <div class="current-date" id="currentDate">Loading...</div>
-                </div>
-
-                <div class="card" style="margin-top: 30px;">
-                    <div class="card-header">
-                        <div class="card-icon">👤</div>
-                        <h3 class="card-title">Your Profile</h3>
-                    </div>
-
-                    <div class="tabs">
-                        <button class="tab active" onclick="switchTab('view')">View</button>
-                        <button class="tab" onclick="switchTab('edit')">Edit</button>
-                    </div>
-
-                    <div id="viewTab" class="tab-content active">
-                        <div id="profileDisplay">
-                            <div class="empty-state">
-                                <div class="empty-icon">👤</div>
-                                <div class="empty-text">No profile created yet<br>Click Edit to get started</div>
-                            </div>
+                `;
+                return;
+            }
+            
+            medicineList.innerHTML = medicines.map(medicine => `
+                <div class="medicine-card">
+                    <div class="medicine-info">
+                        <h4>${medicine.medicineName}</h4>
+                        <div class="medicine-meta">
+                            <span class="meta-badge">⏰ ${medicine.reminderTime}</span>
+                            <span class="meta-badge">💊 ${medicine.dosage}</span>
+                            <span class="meta-badge">📅 ${medicine.frequency}</span>
+                            <span class="meta-badge">⏱️ ${medicine.duration} days</span>
+                            ${medicine.instructions ? `<span class="meta-badge">📝 ${medicine.instructions}</span>` : ''}
                         </div>
                     </div>
-
-                    <div id="editTab" class="tab-content">
-                        <form id="profileForm">
-                            <div class="form-group">
-                                <label class="form-label">Full Name</label>
-                                <input type="text" class="form-input" id="userName" placeholder="John Doe" required>
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">Age</label>
-                                <input type="number" class="form-input" id="userAge" placeholder="25" required>
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">Blood Group</label>
-                                <select class="form-select" id="bloodGroup" required>
-                                    <option value="">Select Blood Group</option>
-                                    <option value="A+">A+</option>
-                                    <option value="A-">A-</option>
-                                    <option value="B+">B+</option>
-                                    <option value="B-">B-</option>
-                                    <option value="O+">O+</option>
-                                    <option value="O-">O-</option>
-                                    <option value="AB+">AB+</option>
-                                    <option value="AB-">AB-</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">Emergency Contact</label>
-                                <input type="tel" class="form-input" id="emergencyContact" placeholder="+91 98765 43210" required>
-                            </div>
-                            <button type="submit" class="btn btn-primary">Save Profile</button>
-                        </form>
+                    <div class="medicine-actions">
+                        <button class="icon-btn btn-edit" onclick="editMedicine('${medicine.id}')" title="Edit">✏️</button>
+                        <button class="icon-btn btn-delete" onclick="deleteMedicine('${medicine.id}')" title="Delete">🗑️</button>
                     </div>
                 </div>
-            </div>
+            `).join('');
+        }
 
-            <div>
-                <div class="card">
-                    <div class="card-header">
-                        <div class="card-icon">💊</div>
-                        <h3 class="card-title">Add Medicine Reminder</h3>
+        // Edit medicine
+        function editMedicine(id) {
+            const medicine = medicines.find(m => m.id === id);
+            if (!medicine) return;
+            
+            document.getElementById('medicineName').value = medicine.medicineName;
+            document.getElementById('dosage').value = medicine.dosage;
+            document.getElementById('reminderTime').value = medicine.reminderTime;
+            document.getElementById('frequency').value = medicine.frequency;
+            document.getElementById('duration').value = medicine.duration;
+            document.getElementById('instructions').value = medicine.instructions || '';
+            
+            editingMedicineId = id;
+            document.getElementById('medicineForm').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Delete medicine
+        function deleteMedicine(id) {
+            if (!confirm('Are you sure you want to delete this medicine reminder?')) return;
+            
+            medicines = medicines.filter(m => m.id !== id);
+            saveMedicines();
+            showToast('Success', 'Medicine reminder deleted', 'success');
+            displayMedicines();
+            updateStatistics();
+        }
+
+        // Load profile from localStorage
+        function loadProfile() {
+            const saved = localStorage.getItem('profile');
+            if (saved) {
+                profile = JSON.parse(saved);
+                displayProfile();
+                
+                document.getElementById('userName').value = profile.name || '';
+                document.getElementById('userAge').value = profile.age || '';
+                document.getElementById('bloodGroup').value = profile.bloodGroup || '';
+                document.getElementById('emergencyContact').value = profile.emergencyContact || '';
+            }
+        }
+
+        // Save profile to localStorage
+        function saveProfile() {
+            localStorage.setItem('profile', JSON.stringify(profile));
+        }
+
+        // Display profile
+        function displayProfile() {
+            const profileDisplay = document.getElementById('profileDisplay');
+            
+            if (!profile.name) {
+                profileDisplay.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">👤</div>
+                        <div class="empty-text">No profile created yet<br>Click Edit to get started</div>
                     </div>
-
-                    <form id="medicineForm">
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-                            <div class="form-group">
-                                <label class="form-label">Medicine Name</label>
-                                <input type="text" class="form-input" id="medicineName" placeholder="Paracetamol" required>
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">Dosage</label>
-                                <input type="text" class="form-input" id="dosage" placeholder="1 tablet" required>
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">Reminder Time</label>
-                                <input type="time" class="form-input" id="reminderTime" required>
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">Frequency</label>
-                                <select class="form-select" id="frequency" required>
-                                    <option value="daily">Daily</option>
-                                    <option value="twice">Twice a Day</option>
-                                    <option value="thrice">Three Times a Day</option>
-                                    <option value="weekly">Weekly</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">Duration (Days)</label>
-                                <input type="number" class="form-input" id="duration" placeholder="7" required>
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">Instructions</label>
-                                <input type="text" class="form-input" id="instructions" placeholder="After food">
-                            </div>
+                `;
+                return;
+            }
+            
+            profileDisplay.innerHTML = `
+                <div class="profile-card">
+                    <div class="profile-avatar">👤</div>
+                    <div class="profile-info">
+                        <div class="info-item">
+                            <div class="info-label">Name</div>
+                            <div class="info-value">${profile.name}</div>
                         </div>
-                        <button type="submit" class="btn btn-primary" style="margin-top: 10px;">Add Reminder</button>
-                    </form>
-                </div>
-
-                <div class="card" style="margin-top: 30px;">
-                    <div class="card-header">
-                        <div class="card-icon">📋</div>
-                        <h3 class="card-title">Your Medicine Schedule</h3>
-                    </div>
-                    <div class="medicine-grid" id="medicineList">
-                        <div class="empty-state">
-                            <div class="empty-icon">💊</div>
-                            <div class="empty-text">No medicines added yet<br>Add your first reminder above!</div>
+                        <div class="info-item">
+                            <div class="info-label">Age</div>
+                            <div class="info-value">${profile.age} years</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Blood Group</div>
+                            <div class="info-value">${profile.bloodGroup}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Emergency</div>
+                            <div class="info-value">${profile.emergencyContact}</div>
                         </div>
                     </div>
                 </div>
-            </div>
-        </div>
-    </div>
+            `;
+        }
 
-    <div class="toast" id="toast">
-        <div class="toast-icon">✓</div>
-        <div class="toast-content">
-            <h4 id="toastTitle">Success</h4>
-            <p id="toastMessage">Action completed</p>
-        </div>
-    </div>
+        // Switch between profile tabs
+        function switchTab(tab) {
+            const tabs = document.querySelectorAll('.tab');
+            const tabContents = document.querySelectorAll('.tab-content');
+            
+            tabs.forEach(t => t.classList.remove('active'));
+            tabContents.forEach(tc => tc.classList.remove('active'));
+            
+            if (tab === 'view') {
+                tabs[0].classList.add('active');
+                document.getElementById('viewTab').classList.add('active');
+            } else {
+                tabs[1].classList.add('active');
+                document.getElementById('editTab').classList.add('active');
+            }
+        }
 
-    <audio id="alarmSound" preload="auto">
-        <source src="data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBTGH0fPTgjMGHm7A7+OZTA0PVqzn77BdGAg+ltryxnMpBSyAzvLZiTYIG2m98OScTgwNUKXh8LJnHAQ5kdry0HwtBSh+zfHckTwKFF+45eugVRUJRaHh8r1vIgU1h9Hy1YU0Bh9vwfDjm0wMD1at5++vXBgJP5bZ88J0KwUuf9Dx25E9ChVhuOnsoFYWCkWg4fO9cCEFNYjR8tWEMwYeb8Lw45tLDA5XrOTwr14YCT6V2fPCcysFLX7P8duRPQoVYbjp66FVFQpFn+H0vW8hBTSH0fPThTQGHm/C8OObTAwOVqzl8K9dGAk+ltnzwnQrBS1+z/HbkT0KFmG56SupVhYKRaDh871wIQU0h9Hz04U0Bh5vwvDjm0wMDlas5fCvXRgJPpbZ88J0KwUtfs/x25E9ChZhuerrqVYVCkSg4fO9cCIFM4fR89SFNAYfb8Lw45tMDA5WrOXwr10YCT6W2fPCdCsFLX7P8duRPAoWYrnq66lWFQpEoOHzvXAiBTOH0fPUhTQGH2/C8OObTAwOVqzl8K9dGAk+ltnzwnQrBS1+z/HbkTwKFmK56uqpVhYKRJ/h871wIgUzh9Hz1IU0Bh9vwvDjm00MDlas5fCvXRgJPpXa88J0KwYtfs/x2pE9ChZiuerrqVYWCkSf4PO+cCEFNIjQ8tSGMwYeb8Pw4ptMDA9Wq+bwr10YCT+W2vPCcysGLX7P8NqRPQoWYrnq6qlWFgpEn+DzvnAhBTSI0PLUhjMGHm/D8OKbTAwPVqvm8K9dGAk/ltrzyHQrBi1+z/HakT0KFmK56uqpVhYKRJ/g871wIQU0iNDy1IYzBh5vw/Dim0wMD1ar5vCvXRgJP5ba88h0KwYtfs/x2pE9ChVht+rqq1cXC0Sf4POzbyMFNYjQ8dWGMwYeb8Pw4ptMDA9Wq+bwr10YCT+W2vPIdCsGLX7P8dmRPgoVYrfq6qtXFwtEn+DzsW8jBTWI0PHVhjMGHm/D8OKbTAwPVqvm8K9dGAk/ltrzyHQrBi1+z/HZkT4KFmG36uurVxcLRJ/g87FvIwU1iNDx1YYzBh5vw/Dim0wMDlas5vCvXRgJPpba88h0KwYsftDx2ZE+ChVht+rqq1cXC0Sf4PKxcCMFNYjQ8dWGMwYeb8Pw4ptMDA5WrObwr10YCT6W2vPIdCsGLH7Q8dmRPgoVYbfq6qtXFwtEn+DysW8jBTWI0PHVhjMGHm/D8OKbTAwOVqzm8K9dGAk+ltrzyHQrBix+0PHZkT4KFmG36uurVxcLRJ/g8rFvIwU1iNDx1YYzBh5vw/Dim0wMDlas5vCvXRgJPpba88h0KwYsftDx2ZE+ChZht+rqq1cXC0Sf4PKxbyMFNYjQ8dWGMwYeb8Pw4ptMDA5WrObwr10YCT6W2vPIdCsGLH7Q8dmRPgoVYbfq6qtXFwtEn+DysW8jBTWI0PHVhjMGHm/D8OKbTAwOVqzm8K9dGAk+ltrzyHQrBix+0PHZkT4KFmG36uurVxcLRJ/g8rFvIwU1iNDx1YYzBh5vw/Dim0wMDlas5vCvXRgJPpba88h0KwYsftDx2ZE+ChZht+rqq1cXC0Sf4PKxbyMFNYjQ8dWGMwYeb8Pw4ptMDA5WrObwr10YCT6W2vPIdCsGLH7Q8dmRPgoVYbfq6qtXFwtEn+DysW8jBTWI0PHVhjMGHm/D8OKbTAwOVqzm8K9dGAk+ltrzyHQrBix+0PHZkT4KFmG36uurVxcLRJ/g8rFvIwU1iNDx1YYzBh5vw/Dim0wMDlas5vCvXRgJPpba88h0KwYsftDx2Z
+        // Update statistics - FIX FOR STATS DISPLAY
+        function updateStatistics() {
+            const activeMeds = medicines.filter(m => m.active).length;
+            
+            document.getElementById('totalMeds').textContent = activeMeds;
+            document.getElementById('upcomingCount').textContent = getUpcomingCount();
+            document.getElementById('takenCount').textContent = 0;
+            document.getElementById('missedCount').textContent = 0;
+            document.getElementById('todayDoses').textContent = activeMeds;
+            document.getElementById('adherenceRate').textContent = '100%';
+        }
+
+        // Get count of upcoming reminders
+        function getUpcomingCount() {
+            const now = new Date();
+            const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+            
+            return medicines.filter(m => m.active && m.reminderTime > currentTime).length;
+        }
+
+        // Start reminder checker
+        function startReminderChecker() {
+            setInterval(checkReminders, 60000);
+        }
+
+        // Check for reminders
+        function checkReminders() {
+            const now = new Date();
+            const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+            
+            medicines.forEach(medicine => {
+                if (medicine.active && medicine.reminderTime === currentTime) {
+                    showAlarmToast(medicine);
+                    playAlarmSound();
+                }
+            });
+            
+            updateStatistics();
+        }
+
+        // Show toast notification
+        function showToast(title, message, type = 'success') {
+            const toast = document.getElementById('toast');
+            const toastTitle = document.getElementById('toastTitle');
+            const toastMessage = document.getElementById('toastMessage');
+            
+            toast.className = `toast toast-${type} show`;
+            toastTitle.textContent = title;
+            toastMessage.textContent = message;
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        // Show alarm toast
+        function showAlarmToast(medicine) {
+            const toast = document.getElementById('toast');
+            const toastTitle = document.getElementById('toastTitle');
+            const toastMessage = document.getElementById('toastMessage');
+            
+            toast.className = 'toast toast-alarm show';
+            toastTitle.textContent = `💊 Time to take ${medicine.medicineName}!`;
+            toastMessage.textContent = `${medicine.dosage} - ${medicine.instructions || 'No special instructions'}`;
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 10000);
+        }
+
+        // Play alarm sound
+        function playAlarmSound() {
+            const audio = document.getElementById('alarmSound');
+            audio.play().catch(e => console.log('Could not play sound:', e));
+        }
+    </script>
+</body>
+</html>
