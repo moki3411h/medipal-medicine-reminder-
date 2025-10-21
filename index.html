@@ -4,6 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MediPal - Smart Medicine Reminder</title>
+    
+    <!-- PWA Meta Tags -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#6366f1">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="MediPal">
+    
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
         
@@ -513,6 +521,34 @@
             display: block;
         }
 
+        /* Install Button Style */
+        #installBtn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 10px 30px rgba(99,102,241,0.4);
+            display: none;
+            z-index: 1000;
+            font-size: 16px;
+            animation: bounce 2s infinite;
+        }
+
+        #installBtn:hover {
+            transform: scale(1.05);
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
         @media (max-width: 1024px) {
             .dashboard-grid {
                 grid-template-columns: 1fr;
@@ -707,6 +743,11 @@
         </div>
     </div>
 
+    <!-- Install App Button -->
+    <button id="installBtn">
+        📱 Install App
+    </button>
+
     <div class="toast" id="toast">
         <div class="toast-icon">✓</div>
         <div class="toast-content">
@@ -735,7 +776,7 @@
             setupEventListeners();
             startReminderChecker();
             requestNotificationPermission();
-            demonstrateAlarm(); // ADDED: Test alarm
+            demonstrateAlarm();
         }
 
         // Start real-time clock
@@ -1014,19 +1055,16 @@
             }, 3000);
         }
 
-        // IMPROVED ALARM FUNCTION - Actually rings!
+        // IMPROVED ALARM FUNCTION
         function showAlarmToast(medicine) {
-            // 1. Alert popup (GUARANTEED TO SHOW)
             alert('🔔 MEDICINE ALARM!\n\n' + 
                   'Time to take: ' + medicine.medicineName + '\n' +
                   'Dosage: ' + medicine.dosage + '\n' +
                   'Instructions: ' + (medicine.instructions || 'No instructions'));
             
-            // 2. Play sound
             const audio = new Audio('https://www.soundjay.com/button/sounds/beep-07.mp3');
             audio.play();
             
-            // 3. Show toast
             const toast = document.getElementById('toast');
             const toastTitle = document.getElementById('toastTitle');
             const toastMessage = document.getElementById('toastMessage');
@@ -1035,7 +1073,6 @@
             toastTitle.textContent = '💊 Time to take ' + medicine.medicineName + '!';
             toastMessage.textContent = medicine.dosage + ' - ' + (medicine.instructions || 'No special instructions');
             
-            // 4. Browser notification
             if (Notification.permission === 'granted') {
                 new Notification('💊 Medicine Reminder', {
                     body: 'Take ' + medicine.medicineName + ' - ' + medicine.dosage,
@@ -1051,13 +1088,39 @@
             }
         }
 
-        // TEST ALARM - Rings 5 seconds after page load!
+        // TEST ALARM
         function demonstrateAlarm() {
             setTimeout(function() {
                 alert('🔔 ALARM TEST!\n\nThe alarm system is working!\n\nWhen you add a medicine with a specific time, it will ring exactly like this at that time!');
                 const testAudio = new Audio('https://www.soundjay.com/button/sounds/beep-07.mp3');
                 testAudio.play();
-            }, 5000); // Rings after 5 seconds
+            }, 5000);
+        }
+
+        // PWA INSTALL FUNCTIONALITY
+        let deferredPrompt;
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            document.getElementById('installBtn').style.display = 'block';
+        });
+
+        document.getElementById('installBtn').addEventListener('click', async () => {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                if (outcome === 'accepted') {
+                    showToast('Success', 'App installed successfully!', 'success');
+                }
+                deferredPrompt = null;
+                document.getElementById('installBtn').style.display = 'none';
+            }
+        });
+
+        // Register Service Worker
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js').catch(() => {});
         }
     </script>
 </body>
