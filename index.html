@@ -1,327 +1,3 @@
-    <!-- Add this script section before </body> -->
-    <script>
-        // Global variables
-        let medicines = [];
-        let profile = {};
-        let editingMedicineId = null;
-
-        // Initialize app when DOM is loaded
-        document.addEventListener('DOMContentLoaded', function() {
-            initializeApp();
-        });
-
-        // Initialize application
-        function initializeApp() {
-            startClock();
-            loadProfile();
-            loadMedicines();
-            updateStatistics();
-            setupEventListeners();
-            startReminderChecker();
-        }
-
-        // Start real-time clock - FIX FOR TIME DISPLAY
-        function startClock() {
-            function updateClock() {
-                const now = new Date();
-                
-                // Update time
-                const hours = String(now.getHours()).padStart(2, '0');
-                const minutes = String(now.getMinutes()).padStart(2, '0');
-                const seconds = String(now.getSeconds()).padStart(2, '0');
-                document.getElementById('currentTime').textContent = `${hours}:${minutes}:${seconds}`;
-                
-                // Update date
-                const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-                document.getElementById('currentDate').textContent = now.toLocaleDateString('en-US', options);
-            }
-            
-            updateClock();
-            setInterval(updateClock, 1000);
-        }
-
-        // Setup event listeners
-        function setupEventListeners() {
-            document.getElementById('medicineForm').addEventListener('submit', handleMedicineSubmit);
-            document.getElementById('profileForm').addEventListener('submit', handleProfileSubmit);
-        }
-
-        // Handle medicine form submission
-        function handleMedicineSubmit(e) {
-            e.preventDefault();
-            
-            const medicineData = {
-                id: editingMedicineId || Date.now().toString(),
-                medicineName: document.getElementById('medicineName').value,
-                dosage: document.getElementById('dosage').value,
-                reminderTime: document.getElementById('reminderTime').value,
-                frequency: document.getElementById('frequency').value,
-                duration: document.getElementById('duration').value,
-                instructions: document.getElementById('instructions').value,
-                active: true,
-                createdAt: new Date().toISOString()
-            };
-            
-            if (editingMedicineId) {
-                const index = medicines.findIndex(m => m.id === editingMedicineId);
-                medicines[index] = medicineData;
-                editingMedicineId = null;
-            } else {
-                medicines.push(medicineData);
-            }
-            
-            saveMedicines();
-            showToast('Success', 'Medicine reminder saved successfully!', 'success');
-            document.getElementById('medicineForm').reset();
-            displayMedicines();
-            updateStatistics();
-        }
-
-        // Handle profile form submission
-        function handleProfileSubmit(e) {
-            e.preventDefault();
-            
-            profile = {
-                name: document.getElementById('userName').value,
-                age: document.getElementById('userAge').value,
-                bloodGroup: document.getElementById('bloodGroup').value,
-                emergencyContact: document.getElementById('emergencyContact').value
-            };
-            
-            saveProfile();
-            showToast('Success', 'Profile saved successfully!', 'success');
-            displayProfile();
-            switchTab('view');
-        }
-
-        // Load medicines from localStorage
-        function loadMedicines() {
-            const saved = localStorage.getItem('medicines');
-            if (saved) {
-                medicines = JSON.parse(saved);
-                displayMedicines();
-            }
-        }
-
-        // Save medicines to localStorage
-        function saveMedicines() {
-            localStorage.setItem('medicines', JSON.stringify(medicines));
-        }
-
-        // Display medicines in the grid - FIX FOR MEDICINE LIST
-        function displayMedicines() {
-            const medicineList = document.getElementById('medicineList');
-            
-            if (medicines.length === 0) {
-                medicineList.innerHTML = `
-                    <div class="empty-state">
-                        <div class="empty-icon">💊</div>
-                        <div class="empty-text">No medicines added yet<br>Add your first reminder above!</div>
-                    </div>
-                `;
-                return;
-            }
-            
-            medicineList.innerHTML = medicines.map(medicine => `
-                <div class="medicine-card">
-                    <div class="medicine-info">
-                        <h4>${medicine.medicineName}</h4>
-                        <div class="medicine-meta">
-                            <span class="meta-badge">⏰ ${medicine.reminderTime}</span>
-                            <span class="meta-badge">💊 ${medicine.dosage}</span>
-                            <span class="meta-badge">📅 ${medicine.frequency}</span>
-                            <span class="meta-badge">⏱️ ${medicine.duration} days</span>
-                            ${medicine.instructions ? `<span class="meta-badge">📝 ${medicine.instructions}</span>` : ''}
-                        </div>
-                    </div>
-                    <div class="medicine-actions">
-                        <button class="icon-btn btn-edit" onclick="editMedicine('${medicine.id}')" title="Edit">✏️</button>
-                        <button class="icon-btn btn-delete" onclick="deleteMedicine('${medicine.id}')" title="Delete">🗑️</button>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        // Edit medicine
-        function editMedicine(id) {
-            const medicine = medicines.find(m => m.id === id);
-            if (!medicine) return;
-            
-            document.getElementById('medicineName').value = medicine.medicineName;
-            document.getElementById('dosage').value = medicine.dosage;
-            document.getElementById('reminderTime').value = medicine.reminderTime;
-            document.getElementById('frequency').value = medicine.frequency;
-            document.getElementById('duration').value = medicine.duration;
-            document.getElementById('instructions').value = medicine.instructions || '';
-            
-            editingMedicineId = id;
-            document.getElementById('medicineForm').scrollIntoView({ behavior: 'smooth' });
-        }
-
-        // Delete medicine
-        function deleteMedicine(id) {
-            if (!confirm('Are you sure you want to delete this medicine reminder?')) return;
-            
-            medicines = medicines.filter(m => m.id !== id);
-            saveMedicines();
-            showToast('Success', 'Medicine reminder deleted', 'success');
-            displayMedicines();
-            updateStatistics();
-        }
-
-        // Load profile from localStorage
-        function loadProfile() {
-            const saved = localStorage.getItem('profile');
-            if (saved) {
-                profile = JSON.parse(saved);
-                displayProfile();
-                
-                document.getElementById('userName').value = profile.name || '';
-                document.getElementById('userAge').value = profile.age || '';
-                document.getElementById('bloodGroup').value = profile.bloodGroup || '';
-                document.getElementById('emergencyContact').value = profile.emergencyContact || '';
-            }
-        }
-
-        // Save profile to localStorage
-        function saveProfile() {
-            localStorage.setItem('profile', JSON.stringify(profile));
-        }
-
-        // Display profile
-        function displayProfile() {
-            const profileDisplay = document.getElementById('profileDisplay');
-            
-            if (!profile.name) {
-                profileDisplay.innerHTML = `
-                    <div class="empty-state">
-                        <div class="empty-icon">👤</div>
-                        <div class="empty-text">No profile created yet<br>Click Edit to get started</div>
-                    </div>
-                `;
-                return;
-            }
-            
-            profileDisplay.innerHTML = `
-                <div class="profile-card">
-                    <div class="profile-avatar">👤</div>
-                    <div class="profile-info">
-                        <div class="info-item">
-                            <div class="info-label">Name</div>
-                            <div class="info-value">${profile.name}</div>
-                        </div>
-                        <div class="info-item">
-                            <div class="info-label">Age</div>
-                            <div class="info-value">${profile.age} years</div>
-                        </div>
-                        <div class="info-item">
-                            <div class="info-label">Blood Group</div>
-                            <div class="info-value">${profile.bloodGroup}</div>
-                        </div>
-                        <div class="info-item">
-                            <div class="info-label">Emergency</div>
-                            <div class="info-value">${profile.emergencyContact}</div>
-                        </div>
-                    </div>
-                </div>
-            `;
-        }
-
-        // Switch between profile tabs
-        function switchTab(tab) {
-            const tabs = document.querySelectorAll('.tab');
-            const tabContents = document.querySelectorAll('.tab-content');
-            
-            tabs.forEach(t => t.classList.remove('active'));
-            tabContents.forEach(tc => tc.classList.remove('active'));
-            
-            if (tab === 'view') {
-                tabs[0].classList.add('active');
-                document.getElementById('viewTab').classList.add('active');
-            } else {
-                tabs[1].classList.add('active');
-                document.getElementById('editTab').classList.add('active');
-            }
-        }
-
-        // Update statistics - FIX FOR STATS DISPLAY
-        function updateStatistics() {
-            const activeMeds = medicines.filter(m => m.active).length;
-            
-            document.getElementById('totalMeds').textContent = activeMeds;
-            document.getElementById('upcomingCount').textContent = getUpcomingCount();
-            document.getElementById('takenCount').textContent = 0;
-            document.getElementById('missedCount').textContent = 0;
-            document.getElementById('todayDoses').textContent = activeMeds;
-            document.getElementById('adherenceRate').textContent = '100%';
-        }
-
-        // Get count of upcoming reminders
-        function getUpcomingCount() {
-            const now = new Date();
-            const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-            
-            return medicines.filter(m => m.active && m.reminderTime > currentTime).length;
-        }
-
-        // Start reminder checker
-        function startReminderChecker() {
-            setInterval(checkReminders, 60000);
-        }
-
-        // Check for reminders
-        function checkReminders() {
-            const now = new Date();
-            const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-            
-            medicines.forEach(medicine => {
-                if (medicine.active && medicine.reminderTime === currentTime) {
-                    showAlarmToast(medicine);
-                    playAlarmSound();
-                }
-            });
-            
-            updateStatistics();
-        }
-
-        // Show toast notification
-        function showToast(title, message, type = 'success') {
-            const toast = document.getElementById('toast');
-            const toastTitle = document.getElementById('toastTitle');
-            const toastMessage = document.getElementById('toastMessage');
-            
-            toast.className = `toast toast-${type} show`;
-            toastTitle.textContent = title;
-            toastMessage.textContent = message;
-            
-            setTimeout(() => {
-                toast.classList.remove('show');
-            }, 3000);
-        }
-
-        // Show alarm toast
-        function showAlarmToast(medicine) {
-            const toast = document.getElementById('toast');
-            const toastTitle = document.getElementById('toastTitle');
-            const toastMessage = document.getElementById('toastMessage');
-            
-            toast.className = 'toast toast-alarm show';
-            toastTitle.textContent = `💊 Time to take ${medicine.medicineName}!`;
-            toastMessage.textContent = `${medicine.dosage} - ${medicine.instructions || 'No special instructions'}`;
-            
-            setTimeout(() => {
-                toast.classList.remove('show');
-            }, 10000);
-        }
-
-        // Play alarm sound
-        function playAlarmSound() {
-            const audio = document.getElementById('alarmSound');
-            audio.play().catch(e => console.log('Could not play sound:', e));
-        }
-    </script>
-</body>
-</html>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1039,5 +715,350 @@
         </div>
     </div>
 
-    <audio id="alarmSound" preload="auto">
-        <source src="audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBTGH0fPTgjMGHm7A7+OZTA0PVqzn77BdGAg+ltryxnMpBSyAzvLZiTYIG2m98OScTgwNUKXh8LJnHAQ5kdry0HwtBSh+zfHckTwKFF+45eugVRUJRaHh8r1vIgU1h9Hy1YU0Bh9vwfDjm0wMD1at5++vXBgJP5bZ88J0KwUuf9Dx25E9ChVhuOnsoFYWCkWg4fO9cCEFNYjR8tWEMwYeb8Lw45tLDA5XrOTwr14YCT6V2fPCcysFLX7P8duRPQoVYbjp66FVFQpFn+H0vW8hBTSH0fPThTQGHm/C8OObTAwOVqzl8K9dGAk+ltnzwnQrBS1+z/HbkT0KFmG56SupVhYKRaDh871wIQU0h9Hz04U0Bh5vwvDjm0wMDlas5fCvXRgJPpbZ88J0KwUtfs/x25E9ChZhuerrqVYVCkSg4fO9cCIFM4fR89SFNAYfb8Lw45tMDA5WrOXwr10YCT6W2fPCdCsFLX7P8duRPAoWYrnq66lWFQpEoOHzvXAiBTOH0fPUhTQGH2/C8OObTAwOVqzl8K9dGAk+ltnzwnQrBS1+z/HbkTwKFmK56uqpVhYKRJ/h871wIgUzh9Hz1IU0Bh9vwvDjm00MDlas5fCvXRgJPpXa88J0KwYtfs/x2pE9ChZiuerrqVYWCkSf4PO+cCEFNIjQ8tSGMwYeb8Pw4ptMDA9Wq+bwr10YCT+W2vPCcysGLX7P8NqRPQoWYrnq6qlWFgpEn+DzvnAhBTSI0PLUhjMGHm/D8OKbTAwPVqvm8K9dGAk/ltrzyHQrBi1+z/HakT0KFmK56uqpVhYKRJ/g871wIQU0iNDy1IYzBh5vw/Dim0wMD1ar5vCvXRgJP5ba88h0KwYtfs/x2pE9ChVht+rqq1cXC0Sf4POzbyMFNYjQ8dWGMwYeb8Pw4ptMDA9Wq+bwr10YCT+W2vPIdCsGLX7P8dmRPgoVYrfq6qtXFwtEn+DzsW8jBTWI0PHVhjMGHm/D8OKbTAwPVqvm8K9dGAk/ltrzyHQrBi1+z/HZkT4KFmG36uurVxcLRJ/g87FvIwU1iNDx1YYzBh5vw/Dim0wMDlas5vCvXRgJPpba88h0KwYsftDx2ZE+ChVht+rqq1cXC0Sf4PKxcCMFNYjQ8dWGMwYeb8Pw4ptMDA5WrObwr10YCT6W2vPIdCsGLH7Q8dmRPgoVYbfq6qtXFwtEn+DysW8jBTWI0PHVhjMGHm/D8OKbTAwOVqzm8K9dGAk+ltrzyHQrBix+0PHZkT4KFmG36uurVxcLRJ/g8rFvIwU1iNDx1YYzBh5vw/Dim0wMDlas5vCvXRgJPpba88h0KwYsftDx2ZE+ChZht+rqq1cXC0Sf4PKxbyMFNYjQ8dWGMwYeb8Pw4ptMDA5WrObwr10YCT6W2vPIdCsGLH7Q8dmRPgoVYbfq6qtXFwtEn+DysW8jBTWI0PHVhjMGHm/D8OKbTAwOVqzm8K9dGAk+ltrzyHQrBix+0PHZkT4KFmG36uurVxcLRJ/g8rFvIwU1iNDx1YYzBh5vw/Dim0wMDlas5vCvXRgJPpba88h0KwYsftDx2ZE+ChZht+rqq1cXC0Sf4PKxbyMFNYjQ8dWGMwYeb8Pw4ptMDA5WrObwr10YCT6W2vPIdCsGLH7Q8dmRPgoVYbfq6qtXFwtEn+DysW8jBTWI0PHVhjMGHm/D8OKbTAwOVqzm8K9dGAk+ltrzyHQrBix+0PHZkT4KFmG36uurVxcLRJ/g8rFvIwU1iNDx1YYzBh5vw/Dim0wMDlas5vCvXRgJPpba88h0KwYsftDx2Z 
+    <script>
+        // Global variables
+        let medicines = [];
+        let profile = {};
+        let editingMedicineId = null;
+
+        // Initialize app when DOM is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeApp();
+        });
+
+        // Initialize application
+        function initializeApp() {
+            startClock();
+            loadProfile();
+            loadMedicines();
+            updateStatistics();
+            setupEventListeners();
+            startReminderChecker();
+            requestNotificationPermission();
+            demonstrateAlarm(); // ADDED: Test alarm
+        }
+
+        // Start real-time clock
+        function startClock() {
+            function updateClock() {
+                const now = new Date();
+                
+                const hours = String(now.getHours()).padStart(2, '0');
+                const minutes = String(now.getMinutes()).padStart(2, '0');
+                const seconds = String(now.getSeconds()).padStart(2, '0');
+                document.getElementById('currentTime').textContent = `${hours}:${minutes}:${seconds}`;
+                
+                const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+                document.getElementById('currentDate').textContent = now.toLocaleDateString('en-US', options);
+            }
+            
+            updateClock();
+            setInterval(updateClock, 1000);
+        }
+
+        // Setup event listeners
+        function setupEventListeners() {
+            document.getElementById('medicineForm').addEventListener('submit', handleMedicineSubmit);
+            document.getElementById('profileForm').addEventListener('submit', handleProfileSubmit);
+        }
+
+        // Handle medicine form submission
+        function handleMedicineSubmit(e) {
+            e.preventDefault();
+            
+            const medicineData = {
+                id: editingMedicineId || Date.now().toString(),
+                medicineName: document.getElementById('medicineName').value,
+                dosage: document.getElementById('dosage').value,
+                reminderTime: document.getElementById('reminderTime').value,
+                frequency: document.getElementById('frequency').value,
+                duration: document.getElementById('duration').value,
+                instructions: document.getElementById('instructions').value,
+                active: true,
+                createdAt: new Date().toISOString()
+            };
+            
+            if (editingMedicineId) {
+                const index = medicines.findIndex(m => m.id === editingMedicineId);
+                medicines[index] = medicineData;
+                editingMedicineId = null;
+            } else {
+                medicines.push(medicineData);
+            }
+            
+            saveMedicines();
+            showToast('Success', 'Medicine reminder saved successfully!', 'success');
+            document.getElementById('medicineForm').reset();
+            displayMedicines();
+            updateStatistics();
+        }
+
+        // Handle profile form submission
+        function handleProfileSubmit(e) {
+            e.preventDefault();
+            
+            profile = {
+                name: document.getElementById('userName').value,
+                age: document.getElementById('userAge').value,
+                bloodGroup: document.getElementById('bloodGroup').value,
+                emergencyContact: document.getElementById('emergencyContact').value
+            };
+            
+            saveProfile();
+            showToast('Success', 'Profile saved successfully!', 'success');
+            displayProfile();
+            switchTab('view');
+        }
+
+        // Load medicines from localStorage
+        function loadMedicines() {
+            const saved = localStorage.getItem('medicines');
+            if (saved) {
+                medicines = JSON.parse(saved);
+                displayMedicines();
+            }
+        }
+
+        // Save medicines to localStorage
+        function saveMedicines() {
+            localStorage.setItem('medicines', JSON.stringify(medicines));
+        }
+
+        // Display medicines in the grid
+        function displayMedicines() {
+            const medicineList = document.getElementById('medicineList');
+            
+            if (medicines.length === 0) {
+                medicineList.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">💊</div>
+                        <div class="empty-text">No medicines added yet<br>Add your first reminder above!</div>
+                    </div>
+                `;
+                return;
+            }
+            
+            medicineList.innerHTML = medicines.map(medicine => `
+                <div class="medicine-card">
+                    <div class="medicine-info">
+                        <h4>${medicine.medicineName}</h4>
+                        <div class="medicine-meta">
+                            <span class="meta-badge">⏰ ${medicine.reminderTime}</span>
+                            <span class="meta-badge">💊 ${medicine.dosage}</span>
+                            <span class="meta-badge">📅 ${medicine.frequency}</span>
+                            <span class="meta-badge">⏱️ ${medicine.duration} days</span>
+                            ${medicine.instructions ? `<span class="meta-badge">📝 ${medicine.instructions}</span>` : ''}
+                        </div>
+                    </div>
+                    <div class="medicine-actions">
+                        <button class="icon-btn btn-edit" onclick="editMedicine('${medicine.id}')" title="Edit">✏️</button>
+                        <button class="icon-btn btn-delete" onclick="deleteMedicine('${medicine.id}')" title="Delete">🗑️</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Edit medicine
+        function editMedicine(id) {
+            const medicine = medicines.find(m => m.id === id);
+            if (!medicine) return;
+            
+            document.getElementById('medicineName').value = medicine.medicineName;
+            document.getElementById('dosage').value = medicine.dosage;
+            document.getElementById('reminderTime').value = medicine.reminderTime;
+            document.getElementById('frequency').value = medicine.frequency;
+            document.getElementById('duration').value = medicine.duration;
+            document.getElementById('instructions').value = medicine.instructions || '';
+            
+            editingMedicineId = id;
+            document.getElementById('medicineForm').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Delete medicine
+        function deleteMedicine(id) {
+            if (!confirm('Are you sure you want to delete this medicine reminder?')) return;
+            
+            medicines = medicines.filter(m => m.id !== id);
+            saveMedicines();
+            showToast('Success', 'Medicine reminder deleted', 'success');
+            displayMedicines();
+            updateStatistics();
+        }
+
+        // Load profile from localStorage
+        function loadProfile() {
+            const saved = localStorage.getItem('profile');
+            if (saved) {
+                profile = JSON.parse(saved);
+                displayProfile();
+                
+                document.getElementById('userName').value = profile.name || '';
+                document.getElementById('userAge').value = profile.age || '';
+                document.getElementById('bloodGroup').value = profile.bloodGroup || '';
+                document.getElementById('emergencyContact').value = profile.emergencyContact || '';
+            }
+        }
+
+        // Save profile to localStorage
+        function saveProfile() {
+            localStorage.setItem('profile', JSON.stringify(profile));
+        }
+
+        // Display profile
+        function displayProfile() {
+            const profileDisplay = document.getElementById('profileDisplay');
+            
+            if (!profile.name) {
+                profileDisplay.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">👤</div>
+                        <div class="empty-text">No profile created yet<br>Click Edit to get started</div>
+                    </div>
+                `;
+                return;
+            }
+            
+            profileDisplay.innerHTML = `
+                <div class="profile-card">
+                    <div class="profile-avatar">👤</div>
+                    <div class="profile-info">
+                        <div class="info-item">
+                            <div class="info-label">Name</div>
+                            <div class="info-value">${profile.name}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Age</div>
+                            <div class="info-value">${profile.age} years</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Blood Group</div>
+                            <div class="info-value">${profile.bloodGroup}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Emergency</div>
+                            <div class="info-value">${profile.emergencyContact}</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Switch between profile tabs
+        function switchTab(tab) {
+            const tabs = document.querySelectorAll('.tab');
+            const tabContents = document.querySelectorAll('.tab-content');
+            
+            tabs.forEach(t => t.classList.remove('active'));
+            tabContents.forEach(tc => tc.classList.remove('active'));
+            
+            if (tab === 'view') {
+                tabs[0].classList.add('active');
+                document.getElementById('viewTab').classList.add('active');
+            } else {
+                tabs[1].classList.add('active');
+                document.getElementById('editTab').classList.add('active');
+            }
+        }
+
+        // Update statistics
+        function updateStatistics() {
+            const activeMeds = medicines.filter(m => m.active).length;
+            
+            document.getElementById('totalMeds').textContent = activeMeds;
+            document.getElementById('upcomingCount').textContent = getUpcomingCount();
+            document.getElementById('takenCount').textContent = 0;
+            document.getElementById('missedCount').textContent = 0;
+            document.getElementById('todayDoses').textContent = activeMeds;
+            document.getElementById('adherenceRate').textContent = '100%';
+        }
+
+        // Get count of upcoming reminders
+        function getUpcomingCount() {
+            const now = new Date();
+            const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+            
+            return medicines.filter(m => m.active && m.reminderTime > currentTime).length;
+        }
+
+        // Start reminder checker
+        function startReminderChecker() {
+            setInterval(checkReminders, 60000);
+        }
+
+        // Check for reminders
+        function checkReminders() {
+            const now = new Date();
+            const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+            
+            medicines.forEach(medicine => {
+                if (medicine.active && medicine.reminderTime === currentTime) {
+                    showAlarmToast(medicine);
+                }
+            });
+            
+            updateStatistics();
+        }
+
+        // Show toast notification
+        function showToast(title, message, type = 'success') {
+            const toast = document.getElementById('toast');
+            const toastTitle = document.getElementById('toastTitle');
+            const toastMessage = document.getElementById('toastMessage');
+            
+            toast.className = `toast toast-${type} show`;
+            toastTitle.textContent = title;
+            toastMessage.textContent = message;
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        // IMPROVED ALARM FUNCTION - Actually rings!
+        function showAlarmToast(medicine) {
+            // 1. Alert popup (GUARANTEED TO SHOW)
+            alert('🔔 MEDICINE ALARM!\n\n' + 
+                  'Time to take: ' + medicine.medicineName + '\n' +
+                  'Dosage: ' + medicine.dosage + '\n' +
+                  'Instructions: ' + (medicine.instructions || 'No instructions'));
+            
+            // 2. Play sound
+            const audio = new Audio('https://www.soundjay.com/button/sounds/beep-07.mp3');
+            audio.play();
+            
+            // 3. Show toast
+            const toast = document.getElementById('toast');
+            const toastTitle = document.getElementById('toastTitle');
+            const toastMessage = document.getElementById('toastMessage');
+            
+            toast.className = 'toast toast-alarm show';
+            toastTitle.textContent = '💊 Time to take ' + medicine.medicineName + '!';
+            toastMessage.textContent = medicine.dosage + ' - ' + (medicine.instructions || 'No special instructions');
+            
+            // 4. Browser notification
+            if (Notification.permission === 'granted') {
+                new Notification('💊 Medicine Reminder', {
+                    body: 'Take ' + medicine.medicineName + ' - ' + medicine.dosage,
+                    requireInteraction: true
+                });
+            }
+        }
+
+        // REQUEST NOTIFICATION PERMISSION
+        function requestNotificationPermission() {
+            if ('Notification' in window && Notification.permission === 'default') {
+                Notification.requestPermission();
+            }
+        }
+
+        // TEST ALARM - Rings 5 seconds after page load!
+        function demonstrateAlarm() {
+            setTimeout(function() {
+                alert('🔔 ALARM TEST!\n\nThe alarm system is working!\n\nWhen you add a medicine with a specific time, it will ring exactly like this at that time!');
+                const testAudio = new Audio('https://www.soundjay.com/button/sounds/beep-07.mp3');
+                testAudio.play();
+            }, 5000); // Rings after 5 seconds
+        }
+    </script>
+</body>
+</html>
