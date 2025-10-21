@@ -17,7 +17,7 @@ public class MedicineDAO {
             stmt.setString(3, time);
             stmt.executeUpdate();
             
-            System.out.println("Medicine saved via JDBC!");
+            System.out.println("Medicine saved via JDBC");
             conn.close();
         } catch (Exception e) {
             e.printStackTrace();
