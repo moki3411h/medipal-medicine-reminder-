@@ -10,7 +10,7 @@ public class DatabaseConnection {
                 "root",
                 "password"
             );
-            System.out.println("✅ JDBC Connected to Database!");
+            System.out.println("JDBC Connected to Database!");
             conn.close();
         } catch (Exception e) {
             System.out.println("Error: " + e);
